@@ -11,107 +11,50 @@
     <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 
     <style>
+        /* Basis-Stil */
         body {
             font-family: Arial, sans-serif;
-            max-width: 500px;
-            margin: auto;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+            background-color: #f7f7f7;
         }
+
+        h2 {
+            text-align: center;
+        }
+
+        /* Container für Inhalte */
+        .container {
+            max-width: 600px;
+            margin: auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+
+        /* Scanner */
         #reader {
             width: 100%;
+            aspect-ratio: 1/1; /* Quadrat, passt sich automatisch an */
             margin-top: 20px;
         }
+
+        /* Formularelemente */
         select, input, button {
             width: 100%;
-            margin-top: 10px;
-            padding: 10px;
+            margin-top: 15px;
+            padding: 12px;
             font-size: 16px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            box-sizing: border-box;
         }
+
         button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
             cursor: pointer;
-        }
-    </style>
-</head>
-<body>
-
-<h2>📦 Kiste als kaputt melden</h2>
-
-<!-- Grund auswählen -->
-<select id="reasonSelect">
-    <option value="">-- Grund auswählen --</option>
-    <option value="Beschädigt">Risse welche die Tragfähigkeit beeinflussen</option>
-    <option value="Fehlerhaft">Löcher im Boden</option>
-    <option value="Verloren">Beschädigte Sockel</option>
-    <option value="Sonstiges">Sonstiges</option>
-</select>
-
-<!-- QR / DataMatrix Scanner -->
-<div id="reader"></div>
-
-<!-- Gefundene DataMatrix anzeigen -->
-<input type="text" id="code" placeholder="DataMatrix Code" readonly>
-
-<!-- Excel speichern -->
-<button onclick="saveEntry()">💾 In Excel speichern</button>
-
-<script>
-    let entries = [];
-    let selectedReason = "";
-
-    const html5QrCode = new Html5Qrcode("reader");
-
-    // Starte den Scanner erst, wenn ein Grund ausgewählt wurde
-    document.getElementById("reasonSelect").addEventListener("change", function() {
-        selectedReason = this.value;
-        if (!selectedReason) {
-            alert("Bitte zuerst einen Grund auswählen!");
-            return;
-        }
-
-        // Starte den Scanner
-        html5QrCode.start(
-            { facingMode: "environment" },
-            { fps: 10, qrbox: 250 },
-            (decodedText) => {
-                document.getElementById("code").value = decodedText;
-            }
-        ).catch(err => {
-            console.error("Scanner konnte nicht gestartet werden:", err);
-        });
-    });
-
-    function saveEntry() {
-        const code = document.getElementById("code").value;
-
-        if (!selectedReason) {
-            alert("Bitte zuerst einen Grund auswählen!");
-            return;
-        }
-
-        if (!code) {
-            alert("Bitte DataMatrix scannen.");
-            return;
-        }
-
-        const now = new Date();
-        const timestamp = now.toLocaleString(); // Datum + Uhrzeit
-
-        entries.push({
-            Datum_Uhrzeit: timestamp,
-            DataMatrix: code,
-            Grund: selectedReason
-        });
-
-        const worksheet = XLSX.utils.json_to_sheet(entries);
-        const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, "Defekte_Kisten");
-
-        XLSX.writeFile(workbook, "defekte_kisten.xlsx");
-
-        document.getElementById("code").value = ""; // Scannerfeld leeren
-        alert("Gespeichert!");
-    }
-</script>
-
-</body>
-</html>
-
+            transitio
