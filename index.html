@@ -57,4 +57,108 @@
             color: white;
             border: none;
             cursor: pointer;
-            transitio
+            transition: background-color 0.2s;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        /* Responsive Text */
+        @media (max-width: 400px) {
+            h2 {
+                font-size: 1.2em;
+            }
+            select, input, button {
+                font-size: 14px;
+                padding: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>📦 Kiste als kaputt melden</h2>
+
+    <!-- Grund auswählen -->
+    <select id="reasonSelect">
+        <option value="">-- Grund auswählen --</option>
+        <option value="Risse welche die Tragfähigkeit beeinflussen">Beschädigt</option>
+        <option value="Löcher im Boden">Fehlerhaft</option>
+        <option value="Beschädigte Sockel">Verloren</option>
+        <option value="Sonstiges">Sonstiges</option>
+    </select>
+
+    <!-- QR / DataMatrix Scanner -->
+    <div id="reader"></div>
+
+    <!-- Gefundene DataMatrix anzeigen -->
+    <input type="text" id="code" placeholder="DataMatrix Code" readonly>
+
+    <!-- Excel speichern -->
+    <button onclick="saveEntry()">💾 In Excel speichern</button>
+</div>
+
+<script>
+    let entries = [];
+    let selectedReason = "";
+
+    const html5QrCode = new Html5Qrcode("reader");
+
+    // Scanner starten, wenn ein Grund ausgewählt wurde
+    document.getElementById("reasonSelect").addEventListener("change", function() {
+        selectedReason = this.value;
+        if (!selectedReason) {
+            alert("Bitte zuerst einen Grund auswählen!");
+            return;
+        }
+
+        html5QrCode.start(
+            { facingMode: "environment" },
+            { fps: 10, qrbox: { width: 250, height: 250 } },
+            (decodedText) => {
+                document.getElementById("code").value = decodedText;
+            }
+        ).catch(err => {
+            console.error("Scanner konnte nicht gestartet werden:", err);
+        });
+    });
+
+    function saveEntry() {
+        const code = document.getElementById("code").value;
+
+        if (!selectedReason) {
+            alert("Bitte zuerst einen Grund auswählen!");
+            return;
+        }
+
+        if (!code) {
+            alert("Bitte DataMatrix scannen.");
+            return;
+        }
+
+        const now = new Date();
+        const timestamp = now.toLocaleString();
+        const currentYear = now.getFullYear();
+
+        entries.push({
+            Datum_Uhrzeit: timestamp,
+            DataMatrix: code,
+            Grund: selectedReason
+        });
+
+        const worksheet = XLSX.utils.json_to_sheet(entries);
+        const workbook = XLSX.utils.book_new();
+
+        XLSX.utils.book_append_sheet(workbook, worksheet, currentYear.toString());
+
+        XLSX.writeFile(workbook, "defekte_kisten.xlsx");
+
+        document.getElementById("code").value = "";
+        alert("Gespeichert!");
+    }
+</script>
+
+</body>
+</html>
