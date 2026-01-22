@@ -20,7 +20,7 @@
             width: 100%;
             margin-top: 20px;
         }
-        input, textarea, button {
+        select, input, button {
             width: 100%;
             margin-top: 10px;
             padding: 10px;
@@ -35,42 +35,70 @@
 
 <h2>📦 Kiste als kaputt melden</h2>
 
+<!-- Grund auswählen -->
+<select id="reasonSelect">
+    <option value="">-- Grund auswählen --</option>
+    <option value="Beschädigt">Beschädigt</option>
+    <option value="Fehlerhaft">Fehlerhaft</option>
+    <option value="Verloren">Verloren</option>
+    <option value="Sonstiges">Sonstiges</option>
+</select>
+
+<!-- QR / DataMatrix Scanner -->
 <div id="reader"></div>
 
+<!-- Gefundene DataMatrix anzeigen -->
 <input type="text" id="code" placeholder="DataMatrix Code" readonly>
 
-<textarea id="reason" placeholder="Grund warum die Kiste kaputt ist"></textarea>
-
+<!-- Excel speichern -->
 <button onclick="saveEntry()">💾 In Excel speichern</button>
 
 <script>
     let entries = [];
+    let selectedReason = "";
 
     const html5QrCode = new Html5Qrcode("reader");
 
-    html5QrCode.start(
-        { facingMode: "environment" },
-        { fps: 10, qrbox: 250 },
-        (decodedText) => {
-            document.getElementById("code").value = decodedText;
-        }
-    );
-
-    function saveEntry() {
-        const code = document.getElementById("code").value;
-        const reason = document.getElementById("reason").value;
-
-        if (!code || !reason) {
-            alert("Bitte Code scannen und Grund eingeben.");
+    // Starte den Scanner erst, wenn ein Grund ausgewählt wurde
+    document.getElementById("reasonSelect").addEventListener("change", function() {
+        selectedReason = this.value;
+        if (!selectedReason) {
+            alert("Bitte zuerst einen Grund auswählen!");
             return;
         }
 
-        const now = new Date().toLocaleString();
+        // Starte den Scanner
+        html5QrCode.start(
+            { facingMode: "environment" },
+            { fps: 10, qrbox: 250 },
+            (decodedText) => {
+                document.getElementById("code").value = decodedText;
+            }
+        ).catch(err => {
+            console.error("Scanner konnte nicht gestartet werden:", err);
+        });
+    });
+
+    function saveEntry() {
+        const code = document.getElementById("code").value;
+
+        if (!selectedReason) {
+            alert("Bitte zuerst einen Grund auswählen!");
+            return;
+        }
+
+        if (!code) {
+            alert("Bitte DataMatrix scannen.");
+            return;
+        }
+
+        const now = new Date();
+        const timestamp = now.toLocaleString(); // Datum + Uhrzeit
 
         entries.push({
-            Datum: now,
+            Datum_Uhrzeit: timestamp,
             DataMatrix: code,
-            Grund: reason
+            Grund: selectedReason
         });
 
         const worksheet = XLSX.utils.json_to_sheet(entries);
@@ -79,7 +107,7 @@
 
         XLSX.writeFile(workbook, "defekte_kisten.xlsx");
 
-        document.getElementById("reason").value = "";
+        document.getElementById("code").value = ""; // Scannerfeld leeren
         alert("Gespeichert!");
     }
 </script>
